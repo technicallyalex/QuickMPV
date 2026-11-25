@@ -1,0 +1,15 @@
+/build/
+/tests/
+*.exe
+*.com
+*.dll
+*.zip
+*.7z
+*.log
+/portable/portable_config/quick-preferences.conf
+/portable/portable_config/cache/
+/portable/portable_config/watch_later/
+/portable/portable_config/screenshots/
+.mpv-update-*
+.mpv-update.lock
+/portable/source/
