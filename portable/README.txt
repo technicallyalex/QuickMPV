@@ -120,15 +120,12 @@ verified loading the first clip and queuing the second. Selecting files in the
 native dialog and dropping files from Explorer remain manual checks.
 
 ENGINE / SOURCE
-Bundled existing engine: mpv v0.42.0-1-g3138fc8ee, built November 5, 2026.
-SHA256 mpv.exe:
-63DE44712D633A59B50A6EF19F91A6F51CEFA6079DB59C69BBD31BAC03C01060
+After a shareable install, the launcher downloads the engine directly from
+shinchiro's mpv Windows builds on first launch after you approve. Run mpv.com --no-config
+--version to identify the engine installed on your system.
 mpv project: https://mpv.io/
-mpv source: https://github.com/mpv-player/mpv/tree/3138fc8ee
-Windows build project: https://github.com/shinchiro/mpv-winbuild-cmake
-The engine and d3dcompiler_43.dll were copied unchanged from the existing local
-MPV installation. This is a local test package, not a complete source distribution
-for public redistribution of the third-party engine and its dependencies.
-GPL license texts are in licenses. Original interface and launcher code: MIT.
-The Lua UI and configuration are editable in portable_config. Launcher source
-and a rebuild script are in source. The launcher does not need Python or Node.
+Windows builds: https://github.com/shinchiro/mpv-winbuild-cmake/releases
+QuickMPV source: https://github.com/technicallyalex/QuickMPV
+See licenses/THIRD-PARTY-NOTICES.md for attribution and upstream license links.
+The original interface and launcher code are MIT-licensed. The Lua UI and
+configuration are editable in portable_config.

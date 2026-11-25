@@ -2,9 +2,17 @@
 
 QuickMPV is a Windows front end for [mpv](https://mpv.io/) with a compact playback overlay, timeline previews, selectable themes, and support for NVIDIA RTX video processing.
 
+## Screenshots
+
+![QuickMPV playback controls and seek bar over a test video](docs/screenshots/playback.png)
+
+![QuickMPV playback menu with speed, audio track, and subtitle controls](docs/screenshots/playback-menu.png)
+
+![QuickMPV Appearance preferences with the White theme selected](docs/screenshots/appearance-preferences.png)
+
 ## Install
 
-Run `QuickMPV-Shareable-Setup.exe`. It installs for your Windows account and adds a Start menu shortcut. On first launch, QuickMPV asks before downloading the MPV engine from [shinchiro's Windows builds](https://github.com/shinchiro/mpv-winbuild-cmake/releases). The download is checked against the SHA-256 digest published by GitHub. Windows 10 or 11 on x64 is required.
+Build `QuickMPV-Shareable-Setup.exe` using the steps below, then run it. It installs for your Windows account and adds a Start menu shortcut. On first launch, QuickMPV asks before downloading the mpv engine from shinchiro's Windows builds and checks the download against GitHub's published SHA-256 digest. Windows 10 or 11 on x64 is required. [mpv Windows builds](https://github.com/shinchiro/mpv-winbuild-cmake/releases)
 
 Open a file with **Ctrl+O** or drag it into the window. Open **Preferences** with **Ctrl+,**. Use **Preferences → Advanced → Check for MPV updates** to check for a newer engine. For more controls, see [the player guide](portable/README.txt).
 
@@ -23,4 +31,4 @@ For a local installer with an engine included, place `mpv.exe`, `mpv.com`, and y
 
 ## License
 
-QuickMPV's original code and icon are available under the [MIT License](LICENSE). The upstream MPV engine and its components are licensed separately and are not distributed in this repository. See [mpv source and licensing](https://github.com/mpv-player/mpv).
+QuickMPV's original code and icon are available under the [MIT License](LICENSE). The [third-party notices](portable/licenses/THIRD-PARTY-NOTICES.md) credit the independently downloaded mpv engine and its components, the build tools, and the inspiration for timeline previews.

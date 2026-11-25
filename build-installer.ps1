@@ -8,7 +8,7 @@ $sevenZip = Join-Path $env:ProgramFiles '7-Zip\7z.exe'
 $compiler = Join-Path $env:WINDIR 'Microsoft.NET\Framework64\v4.0.30319\csc.exe'
 
 $files = @('QuickMPV.exe','QuickMPV.ico','mpv.exe','mpv.com','d3dcompiler_43.dll','README.txt',
-    'licenses\GPL-2.0.txt','licenses\GPL-3.0.txt','licenses\QuickMPV-MIT.txt',
+    'licenses\GPL-2.0.txt','licenses\GPL-3.0.txt','licenses\QuickMPV-MIT.txt','licenses\THIRD-PARTY-NOTICES.md',
     'portable_config\mpv.conf','portable_config\input.conf','portable_config\open-file.ps1',
     'portable_config\quick-audio.lua','portable_config\quick-panel.lua','portable_config\quick-rtx.conf',
     'portable_config\quick-settings.lua','portable_config\quick-stats.lua','portable_config\quick-thumb-worker.lua',
