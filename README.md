@@ -8,11 +8,15 @@ QuickMPV is a Windows front end for [mpv](https://mpv.io/) with a compact playba
 
 ![QuickMPV playback menu with speed, audio track, and subtitle controls](docs/screenshots/playback-menu.png)
 
+![QuickMPV Video preferences with separate RTX upscaling, RTX HDR, and display output controls](docs/screenshots/video-preferences.png)
+
 ![QuickMPV Appearance preferences with the White theme selected](docs/screenshots/appearance-preferences.png)
 
 ## Install
 
-Build `QuickMPV-Shareable-Setup.exe` using the steps below, then run it. It installs for your Windows account and adds a Start menu shortcut. On first launch, QuickMPV asks before downloading the mpv engine from shinchiro's Windows builds and checks the download against GitHub's published SHA-256 digest. Windows 10 or 11 on x64 is required. [mpv Windows builds](https://github.com/shinchiro/mpv-winbuild-cmake/releases)
+Download and run the Windows x64 installer. It installs for your Windows account and adds a Start menu shortcut. Windows 10 or 11 on x64 is required. [Download QuickMPV](https://github.com/technicallyalex/QuickMPV/releases/latest)
+
+On first launch, QuickMPV asks before downloading the mpv engine from shinchiro's Windows builds and checks the download against GitHub's published SHA-256 digest. [mpv Windows builds](https://github.com/shinchiro/mpv-winbuild-cmake/releases)
 
 Open a file with **Ctrl+O** or drag it into the window. Open **Preferences** with **Ctrl+,**. Use **Preferences → Advanced → Check for MPV updates** to check for a newer engine. For more controls, see [the player guide](portable/README.txt).
 

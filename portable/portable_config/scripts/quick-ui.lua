@@ -20,7 +20,8 @@ thumbnail.set_enabled(settings.thumbnails)
 local overlay = mp.create_osd_overlay('ass-events')
 local W,H = 1200,720
 local BASE_SCALE = .92
-local TITLE_HEIGHT = 38
+local CAPTION_HEIGHT = 26
+local TITLE_HEIGHT = CAPTION_HEIGHT + 8
 local caption_drag
 local mx,my = -1,-1
 local regions = {}
@@ -75,8 +76,25 @@ local function rect(x,y,w,h,r,color,opacity)
     shape(string.format('m %f %f l %f %f b %f %f %f %f %f %f l %f %f b %f %f %f %f %f %f l %f %f b %f %f %f %f %f %f l %f %f b %f %f %f %f %f %f',x+r,y,x+w-r,y,x+w-r+k*r,y,x+w,y+r-k*r,x+w,y+r,x+w,y+h-r,x+w,y+h-r+k*r,x+w-r+k*r,y+h,x+w-r,y+h,x+r,y+h,x+r-k*r,y+h,x,y+h-r+k*r,x,y+h-r,x,y+r,x,y+r-k*r,x+r-k*r,y,x+r,y),color,opacity)
 end
 local function circle(x,y,r,c,op) rect(x-r,y-r,r*2,r*2,r,c,op) end
-local function text(x,y,s,size,c,align)
-    a:new_event(); a:append(string.format('{\\an%d\\pos(%f,%f)\\fnSegoe UI\\fs%d\\bord0\\shad0\\1c&H%s&\\1a&H%02X&}%s',align or 5,x,y,size,c or theme.text,alpha,escape(s)))
+-- Trace of the three swept edges and play mark in QuickMPV.ico, in source coordinates.
+local logo_path = 'm 807 159 l 864 186 b 764 197 655 253 551 324 b 503 357 463 389 492 423 '
+    ..'b 505 433 537 448 555 458 l 855 629 b 944 674 987 766 989 881 '
+    ..'b 988 929 979 974 963 1016 l 883 1076 b 937 1000 956 900 948 821 '
+    ..'b 940 744 897 699 853 679 b 834 669 816 674 797 684 l 447 897 '
+    ..'b 339 965 213 899 139 811 l 115 707 b 167 797 258 880 346 886 '
+    ..'b 398 890 430 872 430 841 l 429 447 b 425 350 475 316 551 267 '
+    ..'b 653 201 738 169 807 159'
+local function draw_logo(x,y,r)
+    circle(x,y,r,theme.track)
+    circle(x,y,r*.965,theme.on_accent)
+    local scale=r*.965/516
+    local mark=logo_path:gsub('(%d+) (%d+)',function(px,py)
+        return string.format('%.3f %.3f',x+(tonumber(px)-621)*scale,y+(tonumber(py)-637)*scale)
+    end)
+    shape(mark,theme.accent)
+end
+local function text(x,y,s,size,c,align,weight)
+    a:new_event(); a:append(string.format('{\\an%d\\pos(%f,%f)\\fnSegoe UI\\fs%d\\b%d\\bord0\\shad0\\1c&H%s&\\1a&H%02X&}%s',align or 5,x,y,size,weight or 0,c or theme.text,alpha,escape(s)))
 end
 local function triangle(x,y,size,right,c)
     local d=right and 1 or -1
@@ -162,25 +180,33 @@ local function toggle_maximize()
     mp.set_property_native('window-maximized',not bool('window-maximized'))
 end
 
-local function window_title(is_idle,limit)
-    local title=is_idle and 'QuickMPV' or mp.get_property('media-title','QuickMPV')
-    local count=0
-    for offset in title:gmatch('()[%z\1-\127\194-\244][\128-\191]*') do
-        if count==limit then return title:sub(1,offset-1)..'…' end
-        count=count+1
+local function current_filename(width)
+    local filename=mp.get_property('filename','')
+    -- Keep the end of long names visible so the extension is still readable.
+    local glyph_width=filename:find('[\227-\244]') and 18 or 11
+    local limit=math.floor(width/glyph_width)
+    local offsets={}
+    for offset in filename:gmatch('()[%z\1-\127\194-\244][\128-\191]*') do
+        offsets[#offsets+1]=offset
     end
-    return title
+    if #offsets<=limit then return filename end
+    local tail=math.floor(limit/3)
+    return filename:sub(1,offsets[limit-tail]-1)..'…'..filename:sub(offsets[#offsets-tail+1])
 end
 
 local function draw_title_bar(is_idle)
-    local size=43
-    local content=W-size*3
-    rect(0,0,W,TITLE_HEIGHT,0,theme.panel)
+    local size,padding=38,4
+    local tab_x=W-size*3-padding
+    rect(0,0,W,CAPTION_HEIGHT,0,theme.hover)
+    -- The control tab rises from the title row into the draggable caption strip.
+    shape(string.format('m 0 %d l %d %d b %d %d %d 0 %d 0 l %d 0 %d %d 0 %d',
+        CAPTION_HEIGHT,tab_x-26,CAPTION_HEIGHT,tab_x-10,CAPTION_HEIGHT,tab_x-14,tab_x,W,W,TITLE_HEIGHT,TITLE_HEIGHT),theme.panel)
     rect(0,TITLE_HEIGHT-1,W,1,0,theme.line)
-    region('caption',0,0,content,TITLE_HEIGHT)
-    circle(21,TITLE_HEIGHT/2,10,theme.accent)
-    triangle(21.5,TITLE_HEIGHT/2,7,true,theme.on_accent)
-    text(39,TITLE_HEIGHT/2,window_title(is_idle,math.max(1,math.floor((content-52)/11))),20,theme.text,4)
+    region('caption',0,0,W,TITLE_HEIGHT)
+    if not is_idle then
+        local title_x=16
+        text(title_x,CAPTION_HEIGHT/2,current_filename(tab_x-34-title_x),18,theme.text,4,600)
+    end
     local maximized=bool('window-maximized')
     local buttons={
         {'minimize','Minimize',function() mp.set_property_native('window-minimized',true) end,'minimize'},
@@ -188,11 +214,11 @@ local function draw_title_bar(is_idle)
         {'close','Close',function() mp.commandv('quit') end,'close'},
     }
     for i,item in ipairs(buttons) do
-        local x=content+(i-1)*size
-        local hovered=region('caption-'..item[1],x,0,size,TITLE_HEIGHT,item[2],item[3])
+        local x=tab_x+(i-1)*size
+        local hovered=region('caption-'..item[1],x,0,size,CAPTION_HEIGHT,item[2],item[3])
         local fill=hovered and theme.hover or theme.panel
-        if hovered then rect(x,0,size,TITLE_HEIGHT-1,0,fill) end
-        icon(item[4],x+size/2,TITLE_HEIGHT/2,theme.text,fill)
+        if hovered then rect(x+1,1,size-2,CAPTION_HEIGHT-2,4,fill) end
+        icon(item[4],x+size/2,CAPTION_HEIGHT/2,theme.text,fill)
     end
 end
 
@@ -255,9 +281,10 @@ render=function()
         alpha=math.floor(clamp((mp.get_time()-last_move-2.25)/.25,0,1)*255)
     end
     if idle then
-        circle(W/2,H/2-83,42,theme.accent);triangle(W/2+2,H/2-83,30,true,theme.on_accent)
-        text(W/2,H/2-4,W<370 and 'Drop a media file here' or 'Drop a video or audio file here',27,theme.muted)
-        local bx=W/2-90;local by=H/2+28
+        local center_y=(H+title_inset)/2
+        draw_logo(W/2,center_y-83,42)
+        text(W/2,center_y-4,W<370 and 'Drop a media file here' or 'Drop a video or audio file here',27,theme.muted)
+        local bx=W/2-90;local by=center_y+28
         local hover=region('open',bx,by,180,46,'Open file · Ctrl+O',open_file)
         rect(bx,by,180,46,8,hover and theme.accent_hover or theme.accent);text(W/2,by+23,'Open File…',24,theme.on_accent)
     else
@@ -375,5 +402,5 @@ mp.register_script_message('quick-escape',function()
 end)
 mp.register_event('file-loaded',function() last_move=mp.get_time();menu=false;mp.set_property_native('pause',false) end)
 mp.register_event('end-file',function(e) if e.reason=='error' then mp.osd_message('Unable to play this file: '..(e.error or 'unsupported media'),5) end end)
-for _,p in ipairs({'pause','time-pos','volume','mute','fullscreen','idle-active','media-title','speed','loop-file','osd-dimensions'}) do mp.observe_property(p,'native',function() render() end) end
+for _,p in ipairs({'pause','time-pos','volume','mute','fullscreen','idle-active','filename','speed','loop-file','osd-dimensions'}) do mp.observe_property(p,'native',function() render() end) end
 mp.add_periodic_timer(.05,render)

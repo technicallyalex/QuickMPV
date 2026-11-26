@@ -5,6 +5,22 @@ local theme_catalog = dofile(mp.command_native({'expand-path','~~/quick-theme.lu
 local file = mp.command_native({'expand-path', '~~/quick-preferences.conf'})
 local prefix = 'script-opts-append=quick-ui-thumbnails='
 
+local video_defaults = {['rtx-upscaling']='no',['rtx-hdr']='no',['video-output']='auto'}
+local filter_profiles = {
+    no={yes='quick-rtx-hdr'},
+    yes={no='quick-rtx-vsr',yes='quick-rtx-both'},
+}
+local output_profiles = {sdr='quick-output-sdr',hdr='quick-output-hdr'}
+local video_profiles = {['quick-hdr-passthrough']={['video-output']='hdr'}}
+for upscaling,profiles in pairs(filter_profiles) do
+    for hdr,name in pairs(profiles) do
+        video_profiles[name]={['rtx-upscaling']=upscaling,['rtx-hdr']=hdr}
+    end
+end
+for output,name in pairs(output_profiles) do
+    video_profiles[name]={['video-output']=output}
+end
+
 local function row(label, option, choices, when)
     return {label=label, option=option, choices=choices, when=when}
 end
@@ -23,9 +39,9 @@ settings.pages = {
         row('Always on top', 'ontop', toggle),
         row('Resize window to fit video', 'auto-window-resize', toggle),
         row('Reduce color banding', 'deband', toggle),
-        row('RTX and native HDR', 'rtx-mode', {{'off','Off'},{'quick-rtx-vsr','RTX Super Resolution (2×)'},
-            {'quick-rtx-hdr','RTX HDR (SDR to HDR)'},{'quick-rtx-both','RTX Super Resolution + RTX HDR'},
-            {'quick-hdr-passthrough','Native HDR output'}}, 'Restart required'),
+        row('RTX upscaling', 'rtx-upscaling', {{'yes','On (2×)'},{'no','Off'}}, 'Restart required'),
+        row('RTX HDR', 'rtx-hdr', toggle, 'Restart required'),
+        row('Display output', 'video-output', {{'auto','Automatic'},{'sdr','SDR'},{'hdr','HDR'}}, 'Restart required'),
     }},
     {name='Audio', icon='volume', rows={
         row('Startup volume', 'volume', {{'25','25%'},{'50','50%'},{'75','75%'},{'100','100%'}}),
@@ -61,7 +77,6 @@ local function read()
 end
 
 local function key_for(option)
-    if option == 'rtx-mode' then return 'profile=' end
     if option == 'audio-mode' then return 'script-opts-append=quick-ui-audio-mode=' end
     if option == 'remember-settings' then return 'script-opts-append=quick-ui-remember-settings=' end
     if option == 'theme' then return 'script-opts-append=quick-ui-theme=' end
@@ -70,16 +85,34 @@ end
 
 local session_changes = {}
 
+local function saved_video_options(lines)
+    local options = {}
+    for option,value in pairs(video_defaults) do options[option]=value end
+    for _,line in ipairs(lines) do
+        local profiles=line:match('^profile=(.*)$')
+        if profiles then
+            for name in profiles:gmatch('[^,]+') do
+                local profile=video_profiles[name:match('^%s*(.-)%s*$')]
+                if profile then
+                    for option,value in pairs(profile) do options[option]=value end
+                end
+            end
+        end
+    end
+    return options
+end
+
 function settings.get(option)
     if session_changes[option] then return session_changes[option] end
+    local lines = read()
+    if video_defaults[option] then return saved_video_options(lines)[option] end
     local key = key_for(option)
     local found
-    for _,line in ipairs(read()) do
+    for _,line in ipairs(lines) do
         if line:sub(1,#key) == key then found = line:sub(#key+1) end
     end
     if option == 'theme' then return theme_catalog.by_id[found] and found or 'c2' end
     if found then return found end
-    if option == 'rtx-mode' then return 'off' end
     if option == 'audio-mode' then return 'single' end
     if option == 'thumbnails' or option == 'remember-settings' then return 'yes' end
     if option == 'volume' then return settings.initial_volume end
@@ -97,20 +130,34 @@ settings.theme = settings.get('theme')
 settings.themes = theme_catalog.by_id
 
 local function store(changes)
-    local updates = {}
-    for option,value in pairs(changes) do updates[key_for(option)]=value end
-    local lines = {}
-    local profile
-    for _,line in ipairs(read()) do
+    local saved = read()
+    local updates,video = {},nil
+    for option,value in pairs(changes) do
+        if video_defaults[option] then
+            video=video or saved_video_options(saved)
+            video[option]=value
+        else updates[key_for(option)]=value end
+    end
+    local lines,profiles = {},{}
+    for _,line in ipairs(saved) do
         local key = line:match('^(script%-opts%-append=[^=]+=)') or line:match('^([^=]+=)')
-        if key=='profile=' then profile=line
+        if key=='profile=' and video then
+            local custom={}
+            for name in line:sub(9):gmatch('[^,]+') do
+                if not video_profiles[name:match('^%s*(.-)%s*$')] then custom[#custom+1]=name end
+            end
+            if #custom>0 then profiles[#profiles+1]='profile='..table.concat(custom,',') end
+        elseif key=='profile=' then profiles[#profiles+1]=line
         elseif not key or updates[key]==nil then lines[#lines+1]=line end
     end
-    for key,value in pairs(updates) do
-        if key=='profile=' then profile=value~='off' and key..value or nil
-        else lines[#lines+1]=key..value end
+    for key,value in pairs(updates) do lines[#lines+1]=key..value end
+    for _,line in ipairs(profiles) do lines[#lines+1]=line end
+    if video then
+        local filter=filter_profiles[video['rtx-upscaling']][video['rtx-hdr']]
+        local output=output_profiles[video['video-output']]
+        if filter then lines[#lines+1]='profile='..filter end
+        if output then lines[#lines+1]='profile='..output end
     end
-    if profile then lines[#lines+1] = profile end
     local temp = file .. '.' .. utils.getpid() .. '.tmp'
     local previous = temp .. '.bak'
     local output = io.open(temp, 'wb')

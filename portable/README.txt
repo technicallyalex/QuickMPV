@@ -84,16 +84,20 @@ To undo a graphics change if QuickMPV cannot open, remove the gpu-context line
 from quick-preferences.conf to return to the bundled OpenGL default.
 
 RTX VIDEO AND HDR
-In Preferences > Video > RTX and native HDR, choose RTX Super Resolution (2x),
-RTX HDR (SDR to HDR), RTX Super Resolution + RTX HDR, Native HDR output, or Off. Restart
-QuickMPV after changing modes. The Super Resolution modes use NVIDIA's 2x
-setting from the original MPV installation. RTX HDR converts SDR video to HDR.
-Native HDR output selects Direct3D 11 without applying either NVIDIA filter.
-These modes use the bundled Direct3D 11 renderer and decoder settings. Off
-restores your regular renderer and decoder preferences. Enable the NVIDIA
-features in NVIDIA app > System > Video and enable Windows HDR for HDR output
-on a compatible display. To recover from an incompatible renderer, remove
-the profile=quick-... line from portable_config/quick-preferences.conf.
+Preferences > Video has three separate controls. Restart QuickMPV after changes.
+
+RTX upscaling: On uses NVIDIA RTX Super Resolution at 2x.
+RTX HDR: On applies NVIDIA RTX Video HDR to SDR video.
+Display output: Automatic uses the active renderer and display settings. SDR
+requests an SDR signal and tone-maps HDR video. HDR requests HDR10 (PQ) output,
+including when both NVIDIA filters are off.
+
+Either NVIDIA filter uses Direct3D 11 rendering and decoding. Explicit SDR or
+HDR output uses Direct3D 11 rendering. For RTX, enable the features in NVIDIA
+app > System > Video. For HDR, enable Windows HDR on a compatible display. If
+RTX HDR is enabled with SDR output, the renderer tone-maps the result to SDR.
+To recover from an incompatible renderer, remove the QuickMPV RTX or display
+output profile lines from portable_config/quick-preferences.conf.
 
 PORTABILITY
 Settings live in portable_config next to the player. This preview does not
